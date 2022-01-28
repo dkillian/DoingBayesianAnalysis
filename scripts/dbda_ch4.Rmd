@@ -1,0 +1,200 @@
+---
+title: "Doing Bayesian Data Analysis"
+subtitle: "Chapter 4 notes"
+author: "Dan Killian"
+date: "1/14/2022"
+output:
+  bookdown::html_document2:
+    number_sections: true
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    theme: paper
+    fig.caption: true
+    code_folding: hide
+    df_print: kable
+---
+
+```{r global_options, include=F, warning=F, message=F, echo=F, error=F}
+# standard figure size and generate clean output
+knitr::opts_chunk$set(fig.height=4, fig.width=6, warning=FALSE, message=FALSE, cache=TRUE, error=T, echo=T)
+
+library(here)
+
+source(here("../../../../r prep.R"))
+
+```
+
+# Two-way distributions
+
+Let's say we're interested in joint and marginal probabilities of two variables, eye and hair color. Here's a frequency table.
+
+```{r}
+freqs <- data.frame(eye_color=c("brown","blue","hazel","green","h"),
+                    black = c(.11,.03,.03,.01,.18),
+                    brunette = c(.2,.14,.09,.05,.48),
+                    red = c(.04,.03,.02,.02,.12),
+                    blond = c(.01,.16,.02,.03,.21),
+                    e = c(.37,.36,.16,.11,1))
+
+freqs                    
+
+```
+
+We denote the joint probability of eye color *e* and hair color *h* as $p(e,h)$, and note that $p(e, h) = p(h,e)$.
+
+We obtain the marginal probabilities of hair or eye color by summing the joint probabilities across rows (eye color) or columns (hair color). We denote the marginal probability of eye color as $p(e)$ and hair color as $p(h)$, such that $p(e)=\sum_h{p(e,h)}$ and $p(h)=\sum_e{p(e,h)}$.
+
+Generalizing this, consider a row variable *r* and column variable *c*. When the variables are continuous rather than discrete, then we take an integral rather than a sum. So, $p(r)=\int{dc\hspace{1mm} p(r,c)}$ and $p(c)=\int{dr\hspace{1mm}p(r,c)}$.
+
+Suppose we know an individual has blue eyes. Conditional on that information, what are the probabilities for hair color? Blue-eyed individuals make up 36 percent of this sample. We divide the set of joint probabilities of blue eyes and each hair color by the marginal probability of blue eyes, we rescale the probabilities to sum to one, where one represents the sub-sample of people with blue eyes. These probabilities of hair color, conditional on blue eye color, can be denoted as $p(h|e=blue)=p(e=blue,h)/p(e=blue)$
+
+```{r}
+h_blue <- freqs[2,2:5] / freqs[2,6]
+
+h_blue
+
+```
+
+And these probabilities should sum to one.
+
+```{r}
+sum(h_blue)
+```
+
+In general form, we say that $p(h|e)=p(e,h)/p(e)$ which can also be expressed as $p(h|e)=p(e,h)/\sum_hp(e,h*)$, where \_h\*\_ denotes the full set of hair color values to sum over and *e* denotes a specific value of eye color. More generally, we can go back to the row and column variables: $$p(c|r=x)=\frac{p(r=x,c)}{\sum_{c*}{p(r=x,c*)}}$$
+
+Or:
+
+$$p(c|r=x)=\frac{p(r=x,c)}{p(r=x)}$$ Or if you can maintain in your head that the conditioned variable takes on a definite value, we have:
+
+$$p(c|r)=\frac{p(r,c)}{p(r)}$$ Again, just bearing in mind that the variable *r* takes on a specific value.
+
+To get to Bayes Rule, multiply both sides of above by $p(r)$. $$p(c|r)p(r)=p(r,c)$$
+
+We can do the same thing with $p(r|c)$:
+
+$p(r|c)=\frac{p(c,r)}{p(c)}$ and multiply both sides by $p(c)$
+
+$$
+p(r|c)p(c)=p(c,r)
+$$
+
+Recall the symmetry with joint probabilities $p(r,c)=p(c,r)$. We can then set the conditional expressions equal to each other.
+
+$$
+p(c|r)p(r)=p(r|c)p(c)
+$$ Now divide by $p(r)$
+
+$$
+p(c|r)=\frac{p(r|c)p(c)}{p(r)}
+$$ As a final step, recall that $p(r)$ =
+
+# 4.6 Exercises
+
+## 4.1
+
+```{r}
+
+show(HairEyeColor)
+
+HairEyeColor <- HairEyeColor
+
+HairEyeColor
+
+EyeHairFreq <- apply(HairEyeColor, c("Eye","Hair"), sum)
+
+EyeHairFreq
+
+```
+
+```{r}
+EyeHairProp <- freqs/sum(freqs)
+
+EyeHairProp
+```
+
+```{r}
+hair_freq <- apply(HairEyeColor, c("Hair"), sum)
+
+hair_freq
+
+```
+
+```{r}
+hair_marg <- hair_freq / sum(hair_freq)
+
+hair_marg
+
+```
+
+```{r}
+eye_freq <- apply(HairEyeColor, c("Eye"), sum)
+eye_freq
+```
+
+```{r}
+eye_marg <- eye_freq / sum(eye_freq)
+eye_marg
+```
+
+```{r}
+blue_hair_cond <- EyeHairProp["Blue",] / eye_marg["Blue"]
+blue_hair_cond
+
+```
+This is correct, but differs from text due to rounding
+
+
+## 4.6
+
+School children were surveyed regarding their favorite foods. Of the total sample, 20% were 1st graders, 20% were 6th graders, and 60% were 11th graders. For each grade, the following table shows the proportion of respondents that chose each of three foods as their favorite. 
+
+```{r}
+out <- data.frame(grade=c("first","sixth","eleventh"),
+                  ice_cream = c(.3,.6,.3),
+                  fruit = c(.6,.3,.1),
+                  fries = c(.1,.1,.6))
+out
+
+```
+This is $p(food|grade)$ (The rows sum to one so we know it's a conditional distribution.)
+
+
+
+```{r}
+grade_marg <- data.frame(grade_marg=c(.2,.2,.6))
+grade_marg
+
+```
+This is $p(grade)$
+
+From this information, construct a table of joint probabilities p(grade, food). Also, say whether grade and favorite food are independent or not. 
+
+Recall that $p(food|grade)=\frac{p(food,grade)}{p(grade)}$
+
+So $p(grade, food) = p(food|grade)p(grade)$
+
+```{r}
+out_joint <- out %>%
+  mutate(ice_cream=out$ice_cream*grade_marg[1,],
+         fruit=out$fruit*grade_marg[2,],
+         fries=out$fries*grade_marg[3,])
+         
+out_joint
+
+```
+```{r}
+sum(out_joint[,2:4])
+```
+
+
+For independence, we need $p(food|grade) = p(food)$
+
+
+
+```{r}
+
+```
+
+
